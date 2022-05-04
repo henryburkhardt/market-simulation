@@ -18,16 +18,22 @@ let h;
 const radius = 10;
 const padding = 16;
 
+//surplus
+let totalBuyerSurplus = 0;
+let totalBuyerSurplusFreeze = 0;
 //price controls and tracking
 const pMin = 20;
 const pMax = 30;
-const limitAmount = 1;
+let priceFloor = 20;
+let priceCeiling = 25;
+const limitAmount = 0;
 let buyerAvg;
 let sellerAvg;
-const classes = 10;
+const classes = 20;
+let tax = 0.05;
 
 //time tracking
-const transactionsPerDay = 50;
+const transactionsPerDay = 65;
 let transactionCount = 0;
 let numberDays = 0;
 
@@ -70,12 +76,15 @@ function transaction(seller, buyer, i1, i2, showStatus) {
   //transaction occurs:
   //  (1) reduce buyer price,
   //  (2) increase seller price,
-  if (buyer.price >= seller.price) {
+  if (buyer.price >= seller.price + seller.price * tax) {
     transactedSellerPrices.push(seller.price);
     transactedBuyerPrices.push(buyer.price);
 
+    totalBuyerSurplus = totalBuyerSurplus + (buyer.price - seller.price);
     const newBuyerPrice = buyer.price - (buyer.price - seller.price) / 2;
     const newSellerPrice = seller.price + (buyer.price - seller.price) / 2;
+    // const newBuyerPrice = seller.price;
+    // const newSellerPrice = buyer.price;
     buyer.price = newBuyerPrice;
     seller.price = newSellerPrice;
   }
@@ -86,7 +95,7 @@ function transaction(seller, buyer, i1, i2, showStatus) {
   //  (3) make sure neither exceeds limtis
   if (buyer.price < seller.price) {
     const newBuyerPrice = random(buyer.price, pMax);
-    const newSellerPrice = random(pMin, seller.price);
+    const newSellerPrice = random(priceFloor, buyer.price);
     buyer.price = newBuyerPrice;
     if (newBuyerPrice < buyer.limit) {
       buyer.price = newBuyerPrice;
@@ -109,6 +118,10 @@ function transaction(seller, buyer, i1, i2, showStatus) {
 
 function setRun(status) {
   run = status;
+  priceFloor = parseFloat(document.getElementById("floorSlider").value);
+  priceCeiling = parseFloat(document.getElementById("ceilingSlider").value);
+  tax = parseFloat(document.getElementById("taxSlider").value) / 100;
+
   return;
 }
 function getAvgPrice(array) {
@@ -118,107 +131,64 @@ function getAvgPrice(array) {
   }
   return total / array.length;
 }
-
-function graph(buyers, sellers) {
+function graph2(buyers, sellers) {
   let xOrgin = w / 2 - 200;
-  let yOrigin = h * 0.8 + 100;
+  let yOrigin = h * 0.3 + 100;
   let xMax = w / 2 + 200;
   let yMax = h * 0.8 - 100;
+  let orderedBuyingPrices = [...buyers];
+  let orderedSellingPrices = [...sellers];
 
-  let bPoints = [];
-  let sPoints = [];
-  for (let i = 0; i < classes; i++) {
-    bPoints[i] = [0, i / classes];
-    sPoints[i] = [0, i / classes];
-  }
-  let classRange = (pMax - pMin) / classes;
-
-  for (let b of buyers) {
-    for (let i = 0; i < classes; i++) {
-      if (b < classRange * i + pMin && b > classRange * (i - 1) + pMin) {
-        let old = bPoints[i][0];
-        bPoints[i] = [old + 1, i / classes];
-      }
-    }
-  }
-
-  for (let s of sellers) {
-    for (let i = 0; i < 10; i++) {
-      if (s < classRange * i + pMin && s > classRange * (i - 1) + pMin) {
-        let old = sPoints[i][0];
-        sPoints[i] = [old + 1, i / classes];
-      }
-    }
-  }
+  orderedBuyingPrices.sort();
+  orderedSellingPrices.sort().reverse();
 
   push();
-  rectMode(CENTER);
+  rectMode(CORNER);
   stroke(255, 0, 0);
   strokeWeight(2);
   fill(0);
   stroke(255);
-  rect(w / 2, h * 0.8, 400, 200);
+  rect(xOrgin, yOrigin, 400, 200);
   noStroke();
   fill(255, 255, 255);
   textSize(15);
-  text("Price", w / 2, h * 0.9 + 12);
-  textAlign(RIGHT);
-  text("Quantity", w / 2 - 200, h * 0.9 - 100);
+  text("Price", xOrgin - 20, yOrigin + 100);
+  textAlign(CENTER);
+  text("Quantity", xOrgin + 200, yOrigin + 220);
   pop();
 
   push();
   strokeWeight(5);
   stroke(52, 110, 235);
-  let prevX;
-  let prevY;
-  for (let p of bPoints) {
-    let curY = (p[0] / size) * -1500 + yOrigin;
-    let curX = xOrgin + p[1] * 400;
-
+  for (let i = 0; i < orderedBuyingPrices.length; i++) {
+    curY = ((pMax - orderedBuyingPrices[i]) / (pMax - pMin)) * 200 + yOrigin;
+    curX = (i / orderedBuyingPrices.length) * 400 + xOrgin;
     point(curX, curY);
-    line(prevX, prevY, curX, curY);
-    push();
-    strokeWeight(0);
-    textSize(10);
-    // text(p[1] * pMax, curX, curY);
-    prevX = curX;
-    prevY = curY;
-    pop();
   }
-  prevX = xOrgin;
-  prevY = yOrigin;
+
   stroke(235, 64, 52);
-  for (let p of sPoints) {
-    let curY = (p[0] / size) * -1500 + yOrigin;
-    let curX = xOrgin + p[1] * 400;
-
+  for (let i = 0; i < orderedSellingPrices.length; i++) {
+    curY = ((pMax - orderedSellingPrices[i]) / (pMax - pMin)) * 200 + yOrigin;
+    curX = (i / orderedSellingPrices.length) * 400 + xOrgin;
     point(curX, curY);
-    line(prevX, prevY, curX, curY);
-    prevX = curX;
-    prevY = curY;
-
-    push();
-    noStroke();
-
-    pop();
   }
 
   pop();
 }
-
 function setup() {
   w = windowWidth;
   h = windowHeight;
-  createCanvas(w, h);
+  c = createCanvas(w, h);
+  c.parent("canvas");
 
   //create sellers
   for (let i = 0; i < Math.sqrt(size); i++) {
     for (let j = 0; j < Math.sqrt(size); j++) {
       s = new Seller();
       s.x = w * 0.25 + padding * i;
-      s.y = h * 0.25 + padding * j;
-      s.price = random(pMin, pMax);
-      s.limit = random(pMin, pMin + limitAmount);
+      s.y = h * 0.12 + padding * j;
+      s.price = random(priceFloor, priceCeiling);
+      s.limit = random(priceFloor, priceFloor + limitAmount);
       sellers.push(s);
       s.show();
     }
@@ -229,19 +199,25 @@ function setup() {
     for (let j = 0; j < Math.sqrt(size); j++) {
       b = new Buyer();
       b.x = w * 0.75 - padding * i;
-      b.y = h * 0.25 + padding * j;
+      b.y = h * 0.12 + padding * j;
       b.price = random(pMin, pMax);
       b.limit = random(pMax, pMax - limitAmount);
       buyers.push(b);
       b.show();
     }
   }
+
+  transactedBuyerPricesFreeze = transactedBuyerPrices;
+  transactedSellerPricesFreeze = transactedSellerPrices;
 }
 
 function draw() {
   if (!run) {
     return;
   }
+  document.getElementById("buyerSurplus").innerHTML = Math.round(
+    totalBuyerSurplusFreeze
+  );
   background(0);
   for (let s of sellers) {
     s.show();
@@ -249,13 +225,16 @@ function draw() {
   for (let b of buyers) {
     b.show();
   }
-  graph(transactedBuyerPricesFreeze, transactedSellerPricesFreeze);
+  graph2(transactedBuyerPricesFreeze, transactedSellerPricesFreeze);
   if (transactionCount < transactionsPerDay) {
     index1 = Math.floor(Math.random() * sellers.length);
     index2 = Math.floor(Math.random() * buyers.length);
     transaction(sellers[index1], buyers[index2], index1, index2, true);
     transactionCount = transactionCount + 1;
   } else if (transactionCount === transactionsPerDay) {
+    totalBuyerSurplusFreeze = totalBuyerSurplus;
+    totalBuyerSurplus = 0;
+
     buyerAvg = getAvgPrice(buyers);
     sellerAvg = getAvgPrice(sellers);
 
