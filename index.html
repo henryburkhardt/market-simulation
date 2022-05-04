@@ -56,12 +56,17 @@
   <body>
     <div id="controls">
       
-      <button onclick="setRun(true)">Start</button>
-      <button onclick="setRun(false)">Stop</button>
+
+      <div class="group">
+        <button onclick="setRun(true)">Start</button>
+        <button onclick="setRun(false)">Stop</button>
+        <h2> &nbsp Lines:</h2><input type="checkbox" id="lineCheckBox" checked>
+        <h2> &nbsp Points:</h2><input type="checkbox" id="pointCheckBox" checked>
+      </div>
       
       <div class="group">
           <h2>Daily Transactions: <span id="dailyTrans"></span></h2>
-        <h2>Toal Transactions: <span id="totalTrans"></span></h2>
+        <h2>  &nbsp Total Transactions: <span id="totalTrans"></span></h2>
       </div>
       
       <div class="group"> <h2>Price Floor</h2>
