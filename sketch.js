@@ -36,7 +36,25 @@ let tax = 0.05;
 const transactionsPerDay = 65;
 let transactionCount = 0;
 let numberDays = 0;
+let totalTransactions = 0;
+let dailtyTransactiosn = 0;
+let dailyTransactionFreeze = 0;
 
+//UI onchange events
+function setPriceF(val) {
+  priceFloor = val;
+  document.getElementById("pFtext").innerHTML = String(val);
+}
+function setPriceC(val) {
+  priceCeiling = val;
+  document.getElementById("pCtext").innerHTML = String(val);
+}
+
+function setTax(val) {
+  tax = parseFloat(val) / 100;
+  document.getElementById("taxText").innerHTML = String(tax);
+}
+// priceCeiling = parseFloat(document.getElementById("ceilingSlider").value);
 //sellers are red, buyer are blue
 class Seller {
   constructor() {
@@ -77,6 +95,8 @@ function transaction(seller, buyer, i1, i2, showStatus) {
   //  (1) reduce buyer price,
   //  (2) increase seller price,
   if (buyer.price >= seller.price + seller.price * tax) {
+    totalTransactions = totalTransactions + 1;
+    dailtyTransactiosn = dailtyTransactiosn + 1;
     transactedSellerPrices.push(seller.price);
     transactedBuyerPrices.push(buyer.price);
 
@@ -85,8 +105,13 @@ function transaction(seller, buyer, i1, i2, showStatus) {
     const newSellerPrice = seller.price + (buyer.price - seller.price) / 2;
     // const newBuyerPrice = seller.price;
     // const newSellerPrice = buyer.price;
+
     buyer.price = newBuyerPrice;
-    seller.price = newSellerPrice;
+    if (seller.price > priceCeiling) {
+      seller.price = priceCeiling;
+    } else {
+      seller.price = newSellerPrice;
+    }
   }
 
   //transaction does not occur:
@@ -118,10 +143,6 @@ function transaction(seller, buyer, i1, i2, showStatus) {
 
 function setRun(status) {
   run = status;
-  priceFloor = parseFloat(document.getElementById("floorSlider").value);
-  priceCeiling = parseFloat(document.getElementById("ceilingSlider").value);
-  tax = parseFloat(document.getElementById("taxSlider").value) / 100;
-
   return;
 }
 function getAvgPrice(array) {
@@ -213,11 +234,40 @@ function setup() {
 
 function draw() {
   if (!run) {
+    background(0);
+    for (let s of sellers) {
+      s.show();
+    }
+    for (let b of buyers) {
+      b.show();
+    }
+    graph2(transactedBuyerPricesFreeze, transactedSellerPricesFreeze);
+    push();
+    strokeWeight(3);
+    stroke(0, 255, 0);
+    line(
+      w / 2 - 200,
+      h * 0.3 + 100 + ((pMax - priceFloor) / (pMax - pMin)) * 200,
+      w / 2 + 200,
+      h * 0.3 + 100 + ((pMax - priceFloor) / (pMax - pMin)) * 200
+    );
+    stroke(0, 255, 255);
+    line(
+      w / 2 - 200,
+      h * 0.3 + 100 + ((pMax - priceCeiling) / (pMax - pMin)) * 200,
+      w / 2 + 200,
+      h * 0.3 + 100 + ((pMax - priceCeiling) / (pMax - pMin)) * 200
+    );
+    pop();
     return;
   }
+
   document.getElementById("buyerSurplus").innerHTML = Math.round(
     totalBuyerSurplusFreeze
   );
+  document.getElementById("totalTrans").innerHTML = totalTransactions;
+  document.getElementById("dailyTrans").innerHTML = dailyTransactionFreeze;
+
   background(0);
   for (let s of sellers) {
     s.show();
@@ -234,7 +284,8 @@ function draw() {
   } else if (transactionCount === transactionsPerDay) {
     totalBuyerSurplusFreeze = totalBuyerSurplus;
     totalBuyerSurplus = 0;
-
+    dailyTransactionFreeze = dailtyTransactiosn;
+    dailtyTransactiosn = 0;
     buyerAvg = getAvgPrice(buyers);
     sellerAvg = getAvgPrice(sellers);
 
@@ -264,4 +315,21 @@ function draw() {
   fill(52, 110, 235);
   textAlign(CENTER);
   text("$" + round(buyerAvg, 2), w - w / 4, 80);
+  push();
+  strokeWeight(3);
+  stroke(0, 255, 0);
+  line(
+    w / 2 - 200,
+    h * 0.3 + 100 + ((pMax - priceFloor) / (pMax - pMin)) * 200,
+    w / 2 + 200,
+    h * 0.3 + 100 + ((pMax - priceFloor) / (pMax - pMin)) * 200
+  );
+  stroke(0, 255, 255);
+  line(
+    w / 2 - 200,
+    h * 0.3 + 100 + ((pMax - priceCeiling) / (pMax - pMin)) * 200,
+    w / 2 + 200,
+    h * 0.3 + 100 + ((pMax - priceCeiling) / (pMax - pMin)) * 200
+  );
+  pop();
 }

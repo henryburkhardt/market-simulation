@@ -11,13 +11,17 @@
   </head>
   <style>
     #canvas, #controls {
-      position: absolute;
+      /* position: absolute; */
       font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #controls{
+      width:400px
     }
 
     .group{
       display: flex;
-      justify-content: space-between;
+      /* justify-content: space-between; */
     }
 
     button{
@@ -35,31 +39,51 @@
     color:black
     }
     h2{
-      font-size: 15px;
+      font-size: 14px;
       color:white;
       line-height: 0px;
+      font-weight: 100;
+      
     }
     #buyerSurplus{
       font-weight: 100;
     }
+
+    span{
+      color:rgb(242, 255, 0);
+    }
   </style>
   <body>
-    <diva id="controls">
+    <div id="controls">
+      
       <button onclick="setRun(true)">Start</button>
       <button onclick="setRun(false)">Stop</button>
-      <br>
+      
+      <div class="group">
+          <h2>Daily Transactions: <span id="dailyTrans"></span></h2>
+        <h2>Toal Transactions: <span id="totalTrans"></span></h2>
+      </div>
+      
       <div class="group"> <h2>Price Floor</h2>
-        <input type="range" min="20" max="29" id="floorSlider" value="20"/></div>
+        <input type="range" min="20" max="29" id="floorSlider" value="20" onchange="setPriceF(this.value)"/>
+        <h2 id="pFtext"></h2>
+      </div>
       <div class="group"><h2>Price Ceiling</h2>
-        <input type="range" min="21" max="30" id="ceilingSlider" value="30" /></div>
-    </div>
+        <input type="range" min="21" max="30" id="ceilingSlider" value="30"  onchange="setPriceC(this.value)" />
+        <h2 id="pCtext"></h2>
+      </div>
+    
     <div class="group"><h2>Tax</h2>
-      <input type="range" min="0" max="20" id="taxSlider" value="0" /></div>
-  </div>
+      <input type="range" min="0" max="20" id="taxSlider" value="0" onchange="setTax(this.value)" />
+      <h2 id="taxText"></h2>
+    </div>
+  
     <div class="group">
       <h2>Buyer Surplus $<span id="buyerSurplus"></span></h2> 
   </div>
-   
+</div>
+</div>
+</div>
     <div id="canvas"></div>
   </body>
 </html>
